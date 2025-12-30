@@ -1,0 +1,57 @@
+import requests
+from requests.auth import HTTPDigestAuth
+import time
+
+ROUTER_IP = "192.168.1.1"  # IP de votre routeur
+USERNAME = "admin"
+PASSWORD = "admin" 
+
+url = f"http://{ROUTER_IP}/cgi-bin/wps"
+auth = HTTPDigestAuth(USERNAME, PASSWORD)
+
+try:
+    print("🔄 Activation automatique du WPS...")
+    
+    # Paramètres pour activer WPS automatiquement sans appuyer le bouton
+    params = {
+        "wpsEnable": "1",
+        "wpsStart": "1",
+        "wpsMethod": "1",  # 1 = push button (simulation)
+    }
+    
+    # POST 1: Activer WPS
+    response1 = requests.post(url, auth=auth, data=params, timeout=10)
+    print(f"✓ Activation WPS -> Status {response1.status_code}")
+    
+    # Attendre un peu
+    time.sleep(1)
+    
+    # POST 2: Démarrer la session WPS automatiquement
+    params2 = {
+        "wpsStart": "1",
+        "wpsMethod": "1"
+    }
+    
+    response2 = requests.post(url, auth=auth, data=params2, timeout=10)
+    print(f"✓ Démarrage session WPS -> Status {response2.status_code}")
+    
+    # Paramètres alternatifs (certains routeurs utilisent "action" au lieu de "wpsStart")
+    time.sleep(1)
+    
+    params3 = {
+        "action": "start",
+        "wpsEnable": "1"
+    }
+    
+    response3 = requests.post(url, auth=auth, data=params3, timeout=10)
+    print(f"✓ Démarrage (alternative) -> Status {response3.status_code}")
+    
+    if any(r.status_code == 200 for r in [response1, response2, response3]):
+        print("\n✓✓ WPS activé automatiquement!")
+        print("✓ Mode WPS actif - Connexion en cours...")
+        print("Attendez la connexion des appareils (2-3 minutes)")
+    else:
+        print("\n⚠️ Vérifiez la réponse du routeur")
+        
+except Exception as e:
+    print(f"Erreur: {e}")
